@@ -1,33 +1,38 @@
+import axios from "axios";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import React, { useContext } from "react";
+import { toast } from "react-toastify";
 import Layout from "../../components/Layout";
-import data from "../../utils/data";
+import Product from "../../models/Product";
+import db from "../../utils/db";
 import { Store } from "../../utils/Store";
 
-const ProductScreen = () => {
+const ProductScreen = ({ product }) => {
   const { state, dispatch } = useContext(Store);
 
   const router = useRouter();
 
-  const { query } = useRouter();
-  const { slug } = query;
+  // const { query } = useRouter();
+  // const { slug } = query;
+  // const product = data.products.find((p) => p.slug === slug);
 
-  const product = data.products.find((p) => p.slug === slug);
+  if (!product)
+    return <Layout title={"Product Not found"}>Product Not Found</Layout>;
 
-  if (!product) return <div>Product Not Found</div>;
-
-  const addToCartHandler = () => {
+  const addToCartHandler = async () => {
     const existItem = state.cart.cartItems.find(
       (ct) => ct.slug === product.slug
     );
 
     const quantity = existItem ? existItem.quantity + 1 : 1;
 
-    if (product.countInStock < quantity) {
-      alert("Sorry, Product is out of stock");
-      return;
+    // check countInStock and quantity
+    const { data } = await axios.get(`/api/products/${product._id}`);
+
+    if (data.countInStock < quantity) {
+      return toast.error("Sorry, Product is out of stock");
     }
 
     dispatch({ type: "CART_ADD_ITEM", payload: { ...product, quantity } });
@@ -83,3 +88,20 @@ const ProductScreen = () => {
 };
 
 export default ProductScreen;
+
+export const getServerSideProps = async (context) => {
+  const { params } = context;
+  const { slug } = params;
+
+  await db.connect();
+
+  const product = await Product.findOne({ slug }).lean();
+
+  await db.disconnect();
+
+  return {
+    props: {
+      product: product ? db.convertDocToObj(product) : null,
+    },
+  };
+};

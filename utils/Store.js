@@ -5,24 +5,36 @@ export const Store = createContext();
 
 const initialState = {
   /* 
-    name: "Free Shirt",
-      slug: "free-shirt",
-      category: "Shirts",
-      image: "/images/shirt1.jpg",
-      price: 70,
-      brand: "Nike",
-      rating: 4.5,
-      numReviews: 8,
-      countInStock: 20,
-      description: "A popular shirt",
-      isFeatured: true,
-      banner: "/images/banner1.jpg",
+    cartItems: [
+      {
+        name: "Free Shirt",
+        slug: "free-shirt",
+        category: "Shirts",
+        image: "/images/shirt1.jpg",
+        price: 70,
+        brand: "Nike",
+        rating: 4.5,
+        numReviews: 8,
+        countInStock: 20,
+        description: "A popular shirt",
+        isFeatured: true,
+        banner: "/images/banner1.jpg",
 
-      quantity: 1
-    */
+        quantity: 1
+      }
+    ],
+    shippingAddress: {
+      fullName, 
+      address, 
+      city, 
+      postalCode, 
+      country
+    }    
+    paymentMethod: '' || "PayPal", "Stripe", "CashOnDelivery"
+  */
   cart: Cookies.get("cart")
     ? JSON.parse(Cookies.get("cart"))
-    : { cartItems: [] },
+    : { cartItems: [], shippingAddress: {}, paymentMethod: "" },
 };
 
 const reducer = (state, action) => {
@@ -52,6 +64,35 @@ const reducer = (state, action) => {
 
       return { ...state, cart: { ...state.cart, cartItems } };
     }
+    case "CART_RESET":
+      return {
+        ...state,
+        cart: {
+          cartItems: [],
+          shippingAddress: { location: {} },
+          paymentMethod: "",
+        },
+      };
+
+    case "SAVE_SHIPPING_ADDRESS":
+      return {
+        ...state,
+        cart: {
+          ...state.cart,
+          shippingAddress: {
+            ...state.cart.shippingAddress,
+            ...action.payload,
+          },
+        },
+      };
+    case "SAVE_PAYMENT_METHOD":
+      return {
+        ...state,
+        cart: {
+          ...state.cart,
+          paymentMethod: action.payload,
+        },
+      };
     default:
       return state;
   }
